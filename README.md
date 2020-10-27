@@ -9,5 +9,5 @@ to simplify the bulk resizing of these image subfolders for use by web.
 
 ## Usage
 
-| usage: ./bulk_resize.py inDir outDir [max_width max_height]
+> usage: ./bulk_resize.py inDir outDir [max_width max_height]
 
