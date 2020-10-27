@@ -9,12 +9,28 @@ import os, sys
 import json
 import functools
 
+# need to fix colorspace issues
+import io
+from PIL import Image
+from PIL import ImageCms
+
+
 supported_ext = ['.jpeg','.jpg','.png']
 
 max_width = 800
 max_height = 600
 
 WRITE_IMAGES = True
+
+def convert_to_srgb(img):
+    '''Convert PIL image to sRGB color space (if possible)'''
+    icc = img.info.get('icc_profile', '')
+    if icc:
+        io_handle = io.BytesIO(icc)     # virtual file
+        src_profile = ImageCms.ImageCmsProfile(io_handle)
+        dst_profile = ImageCms.createProfile('sRGB')
+        img = ImageCms.profileToProfile(img, src_profile, dst_profile)
+    return img
 
 # From https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
 def image_transpose_exif(im):
@@ -61,6 +77,7 @@ def resizeImage(path, out_dir, max_width=max_width, max_height=max_height):
     ratio = min(float(max_width) / size[0], float(max_height) / size[1])
     new_image_size = tuple([int(x*ratio) for x in size])
     if WRITE_IMAGES:
+        im = convert_to_srgb(im)
         # jpeg's cant have alpha but somehow it is happening... drop alpha and warn
         if ext.lower() in ['.jpeg', '.jpg'] and im.mode == "RGBA":
             print "WARNING: found JPG with alpha channel???  dropping channel %s" % path
